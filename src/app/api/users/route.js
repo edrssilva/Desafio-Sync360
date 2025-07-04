@@ -12,3 +12,40 @@ export async function GET(request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function POST(request) {
+  const connection = await createConnection();
+  const {
+    profile_image_url,
+    first_name,
+    last_name,
+    birth_date,
+    street,
+    neighborhood,
+    city,
+    state,
+    biography,
+  } = await request.json();
+
+  const [result] = await connection.query(
+    `INSERT INTO users (
+      profile_image_url, first_name, last_name, birth_date,
+      street, neighborhood, city, state, biography
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      profile_image_url || null,
+      first_name,
+      last_name,
+      birth_date,
+      street,
+      neighborhood,
+      city,
+      state,
+      biography || null,
+    ]
+  );
+
+  return new NextResponse(JSON.stringify({ id: result.insertId }), {
+    status: 201,
+  });
+}
