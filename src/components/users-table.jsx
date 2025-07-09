@@ -5,11 +5,10 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  getFilteredRowModel, // Import for filtering
+  getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input"; // Import Input for global filter
 import {
   Table,
   TableBody,
@@ -19,8 +18,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowUpDown, // Icon for sorting
-} from "lucide-react"; // Assuming lucide-react is available for icons
+  ArrowUpDown,
+} from "lucide-react";
 
 // Function to calculate age from birth date string
 function getAge(dateString) {
@@ -34,17 +33,17 @@ function getAge(dateString) {
   return age;
 }
 
-export default function UsersTable({ users, onEdit, onDelete }) {
-  // State for sorting
+// UsersTable now receives globalFilter and setGlobalFilter as props
+export default function UsersTable({ users, onEdit, onDelete, globalFilter, setGlobalFilter }) {
+  // State for sorting, managed internally by UsersTable
   const [sorting, setSorting] = useState([]);
-  // State for global filter
-  const [globalFilter, setGlobalFilter] = useState("");
 
   // Memoize data to avoid recalculations on every render
   const data = useMemo(() => {
-    return users.map((u) => ({
+    // Ensure 'users' is an array before calling map to prevent "Cannot read properties of undefined (reading 'map')"
+    return (users || []).map((u) => ({
       ...u,
-      age: u.birth_date ? getAge(u.birth_date) : null, // Handle cases where birth_date might be missing
+      age: u.birth_date ? getAge(u.birth_date) : null,
     }));
   }, [users]);
 
@@ -59,29 +58,30 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center"
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap"> {/* Added whitespace-nowrap to prevent header text wrap */}
               Nome
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </Button>
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 whitespace-nowrap overflow-hidden"> {/* Added whitespace-nowrap and overflow-hidden */}
             {/* Display profile image if available, otherwise a placeholder */}
             <img
               src={row.original.profile_image_url || `https://placehold.co/40x40/cccccc/333333?text=${row.original.first_name[0]}`}
               alt={`${row.original.first_name} ${row.original.last_name}`}
-              className="w-10 h-10 rounded-full object-cover border-2 border-gray-300"
+              className="w-10 h-10 rounded-full object-cover border-2 border-gray-300 flex-shrink-0" // Added flex-shrink-0
               onError={(e) => {
                 // Fallback to a text placeholder if image fails to load
                 e.target.onerror = null;
                 e.target.src = `https://placehold.co/40x40/cccccc/333333?text=${row.original.first_name[0]}`;
               }}
             />
-            {row.original.first_name}
+            <span className="truncate">{row.original.first_name}</span> {/* Added truncate */}
           </div>
         ),
-        enableSorting: true, // Enable sorting for this column
+        enableSorting: true,
+        minSize: 180, // Set a minimum size for the column
       },
       {
         accessorKey: "last_name",
@@ -91,13 +91,19 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center"
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap"> {/* Added whitespace-nowrap to prevent header text wrap */}
               Sobrenome
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </Button>
         ),
-        enableSorting: true, // Enable sorting for this column
+        cell: ({ row }) => (
+            <div className="whitespace-nowrap overflow-hidden truncate"> {/* Added whitespace-nowrap, overflow-hidden, truncate */}
+                {row.original.last_name}
+            </div>
+        ),
+        enableSorting: true,
+        minSize: 180, // Set a minimum size for the column
       },
       {
         accessorKey: "age",
@@ -107,13 +113,14 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center"
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               Idade
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </Button>
         ),
-        enableSorting: true, // Enable sorting for this column
+        enableSorting: true,
+        minSize: 80, // Set a minimum size
       },
       {
         accessorKey: "city",
@@ -123,13 +130,14 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center"
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               Cidade
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </Button>
         ),
-        enableSorting: true, // Enable sorting for this column
+        enableSorting: true,
+        minSize: 150, // Set a minimum size
       },
       {
         accessorKey: "state",
@@ -139,18 +147,19 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
             className="flex items-center"
           >
-            <div className="flex items-center">
+            <div className="flex items-center whitespace-nowrap">
               Estado
               <ArrowUpDown className="ml-2 h-4 w-4" />
             </div>
           </Button>
         ),
-        enableSorting: true, // Enable sorting for this column
+        enableSorting: true,
+        minSize: 100, // Set a minimum size
       },
       {
         id: "actions",
         cell: ({ row }) => (
-          <div className="flex gap-2">
+          <div className="flex gap-2 whitespace-nowrap"> {/* Added whitespace-nowrap */}
             <Button variant="outline" size="sm" onClick={() => onEdit(row.original)}>
               Editar
             </Button>
@@ -159,8 +168,9 @@ export default function UsersTable({ users, onEdit, onDelete }) {
             </Button>
           </div>
         ),
-        enableSorting: false, // Actions column should not be sortable
-        enableColumnFilter: false, // Actions column should not be filterable
+        enableSorting: false,
+        enableColumnFilter: false,
+        minSize: 150, // Set a minimum size for actions
       },
     ],
     [onEdit, onDelete]
@@ -172,9 +182,9 @@ export default function UsersTable({ users, onEdit, onDelete }) {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(), // Enable client-side filtering
-    onSortingChange: setSorting, // Update sorting state
-    onGlobalFilterChange: setGlobalFilter, // Update global filter state
+    getFilteredRowModel: getFilteredRowModel(),
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       globalFilter,
@@ -182,16 +192,7 @@ export default function UsersTable({ users, onEdit, onDelete }) {
   });
 
   return (
-    <div className="mt-8 p-6 bg-white rounded-lg shadow-lg"> {/* Container for distinction */}
-      <div className="mb-4">
-        <Input
-          placeholder="Filtrar usuários..."
-          value={globalFilter ?? ""}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
-      </div>
-      <div className="overflow-x-auto rounded-md border">
+    <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -233,6 +234,5 @@ export default function UsersTable({ users, onEdit, onDelete }) {
           </TableBody>
         </Table>
       </div>
-    </div>
   );
 }
